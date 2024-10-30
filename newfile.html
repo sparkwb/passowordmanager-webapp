@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Manager - New File</title>
+    <link rel="icon" href="https://i.ibb.co/fSYf6LH/web.png" type="image/png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-top: 20px;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 400px; /* Fixed width for a better layout */
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        input[type="text"], input[type="password"], input[type="email"], input[type="search"] {
+            width: calc(100% - 22px); /* Match button width */
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .entry-container {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            position: relative;
+            text-align: left; /* Align text to the left */
+        }
+
+        .remove-button {
+            background-color: red;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .separator {
+            margin: 20px 0;
+            border-top: 1px solid #ccc;
+            width: 100%;
+        }
+
+        .search-container {
+            margin-top: 20px; /* Add margin for spacing */
+            text-align: left; /* Align the search input to the left */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create a New Password File</h1>
+
+        <!-- Entry Form -->
+        <div id="entryForm">
+            <input type="text" id="website" placeholder="Website Name" maxlength="50" required>
+            <input type="email" id="email" placeholder="Email" maxlength="50" required>
+            <input type="text" id="username" placeholder="Username" maxlength="30" required>
+            <input type="password" id="password" placeholder="Password" maxlength="30" required>
+            <input type="text" id="more" placeholder="More Info" maxlength="100">
+            <button onclick="addEntry()">Add Entry</button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="separator"></div>
+        <div class="search-container">
+            <input type="search" id="searchBar" placeholder="Search by Website Name" oninput="filterEntries()">
+        </div>
+
+        <div id="entries"></div>
+
+        <button id="downloadButton" style="display: none;" onclick="downloadFile()">Download Encrypted Password File</button>
+        <button onclick="location.href='index.html'">Back to Home</button>
+    </div>
+
+    <script>
+        const entries = [];
+
+        function addEntry() {
+            const website = document.getElementById('website').value;
+            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const more = document.getElementById('more').value;
+
+            const entry = { website, email, username, password, more };
+            entries.push(entry);
+            displayEntries();
+            clearInputFields();
+
+            // Show the download button if there is at least one entry
+            document.getElementById('downloadButton').style.display = 'block';
+        }
+
+        function displayEntries() {
+            const entriesDiv = document.getElementById('entries');
+            entriesDiv.innerHTML = ''; // Clear previous entries
+
+            entries.forEach((entry, index) => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'entry-container';
+                entryDiv.innerHTML = `
+                    <strong>Website:</strong> ${entry.website}<br>
+                    <strong>Email:</strong> ${entry.email}<br>
+                    <strong>Username:</strong> ${entry.username}<br>
+                    <strong>Password:</strong> ${entry.password}<br>
+                    <strong>More:</strong> ${entry.more}
+                    <button class="remove-button" onclick="removeEntry(${index})">Remove</button>
+                `;
+                entriesDiv.appendChild(entryDiv);
+            });
+        }
+
+        function removeEntry(index) {
+            entries.splice(index, 1); // Remove entry from array
+            displayEntries(); // Update displayed entries
+
+            // Hide the download button if there are no entries left
+            if (entries.length === 0) {
+                document.getElementById('downloadButton').style.display = 'none';
+            }
+        }
+
+        function clearInputFields() {
+            document.getElementById('website').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('more').value = '';
+        }
+
+        function filterEntries() {
+            const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+            const entriesDiv = document.getElementById('entries');
+            entriesDiv.innerHTML = ''; // Clear previous entries
+
+            entries.forEach((entry, index) => {
+                if (entry.website.toLowerCase().includes(searchTerm)) {
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'entry-container';
+                    entryDiv.innerHTML = `
+                        <strong>Website:</strong> ${entry.website}<br>
+                        <strong>Email:</strong> ${entry.email}<br>
+                        <strong>Username:</strong> ${entry.username}<br>
+                        <strong>Password:</strong> ${entry.password}<br>
+                        <strong>More:</strong> ${entry.more}
+                        <button class="remove-button" onclick="removeEntry(${index})">Remove</button>
+                    `;
+                    entriesDiv.appendChild(entryDiv);
+                }
+            });
+        }
+
+        function downloadFile() {
+            const masterPassword = prompt("Enter Master Password for Encryption:");
+            if (!masterPassword) return; // Cancel if no password provided
+
+            // Encrypting entries
+            const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(entries), masterPassword).toString();
+
+            // Create a blob and download the file
+            const blob = new Blob([encryptedData], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = 'passwords.txt';
+            link.click();
+        }
+    </script>
+</body>
+</html>

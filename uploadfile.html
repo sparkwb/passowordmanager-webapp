@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://i.ibb.co/fSYf6LH/web.png" type="image/png">
+    <title>Password Manager - Upload File</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+    <style>
+        /* Styles are the same as before */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-top: 20px;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        input[type="file"] {
+            margin: 10px 0;
+        }
+
+        input[type="password"], input[type="search"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .entry-container {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            position: relative;
+            text-align: left;
+        }
+
+        .separator {
+            margin: 20px 0;
+            border-top: 1px solid #ccc;
+            width: 100%;
+        }
+
+        .remove-button, .edit-button {
+            width: calc(50% - 4px);
+            display: inline-block;
+            margin: 2px;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .remove-button {
+            background-color: red;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .edit-button {
+            background-color: orange;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .error-message {
+            color: red;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Encrypted Password File</h1>
+        
+        <div id="uploadSection">
+            <input type="file" id="fileInput" accept=".txt">
+            <input type="password" id="masterPassword" placeholder="Enter Master Password" required>
+            <button onclick="decryptFile()">Decrypt and Show Entries</button>
+            <div id="errorMessage" class="error-message" style="display:none;"></div>
+        </div>
+
+        <button id="addEntryButton" style="display: none;" onclick="addNewEntry()">Add New Entry</button>
+        <input type="search" id="searchBar" placeholder="Search by Website Name" oninput="filterEntries()" style="display: none;">
+        
+        <div class="separator"></div>
+        
+        <div id="entries"></div>
+        
+        <button id="downloadButton" style="display: none;" onclick="downloadUpdatedFile()">Download Updated File</button>
+        <button onclick="location.href='index.html'">Back to Home</button>
+    </div>
+
+    <script>
+        let entries = [];
+        let isDecrypted = false;
+
+        function decryptFile() {
+            const fileInput = document.getElementById('fileInput');
+            const masterPassword = document.getElementById('masterPassword').value;
+            const entriesDiv = document.getElementById('entries');
+            entriesDiv.innerHTML = ''; // Clear previous entries
+
+            document.getElementById('errorMessage').style.display = 'none';
+
+            if (fileInput.files.length === 0) {
+                alert("Please select a file.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                const encryptedData = event.target.result;
+                try {
+                    const decryptedData = CryptoJS.AES.decrypt(encryptedData, masterPassword);
+                    const jsonData = decryptedData.toString(CryptoJS.enc.Utf8);
+
+                    if (!jsonData) {
+                        displayError("Invalid Password");
+                        return;
+                    }
+
+                    entries = JSON.parse(jsonData);
+                    displayEntries();
+
+                    document.getElementById('uploadSection').style.display = 'none';
+                    document.getElementById('searchBar').style.display = 'block';
+                    document.getElementById('addEntryButton').style.display = 'block';
+                    isDecrypted = true;
+
+                } catch (error) {
+                    displayError("Error decrypting file: " + error.message);
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function displayError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.innerText = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                location.reload();
+            }, 3000); // Reload after 3 seconds for user to read the error
+        }
+
+        function displayEntries() {
+            const entriesDiv = document.getElementById('entries');
+            entriesDiv.innerHTML = '';
+
+            if (entries.length === 0) {
+                entriesDiv.innerHTML = "<p>No entries found.</p>";
+                return;
+            }
+
+            entries.forEach((entry, index) => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'entry-container';
+                entryDiv.innerHTML = `
+                    <strong>Website:</strong> ${entry.website}<br>
+                    <strong>Email:</strong> ${entry.email}<br>
+                    <strong>Username:</strong> ${entry.username}<br>
+                    <strong>Password:</strong> ${entry.password}<br>
+                    <strong>More:</strong> ${entry.more}<br>
+                    <button class="edit-button" onclick="openEditPopup(${index})">Edit</button>
+                    <button class="remove-button" onclick="removeEntry(${index})">Remove</button>
+                `;
+                entriesDiv.appendChild(entryDiv);
+            });
+
+            document.getElementById('downloadButton').style.display = 'block';
+        }
+
+        function removeEntry(index) {
+            entries.splice(index, 1);
+            displayEntries();
+        }
+
+        function filterEntries() {
+            const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+            const entriesDiv = document.getElementById('entries');
+            entriesDiv.innerHTML = '';
+
+            entries.forEach((entry, index) => {
+                if (entry.website.toLowerCase().includes(searchTerm)) {
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'entry-container';
+                    entryDiv.innerHTML = `
+                        <strong>Website:</strong> ${entry.website}<br>
+                        <strong>Email:</strong> ${entry.email}<br>
+                        <strong>Username:</strong> ${entry.username}<br>
+                        <strong>Password:</strong> ${entry.password}<br>
+                        <strong>More:</strong> ${entry.more}<br>
+                        <button class="edit-button" onclick="openEditPopup(${index})">Edit</button>
+                        <button class="remove-button" onclick="removeEntry(${index})">Remove</button>
+                    `;
+                    entriesDiv.appendChild(entryDiv);
+                }
+            });
+        }
+
+        function openEditPopup(index) {
+            const entry = entries[index];
+            const message = "Click Cancel If you don't want to Change It";
+
+            const newWebsite = prompt(message + "\nEdit Website Name:", entry.website);
+            const newEmail = prompt(message + "\nEdit Email:", entry.email);
+            const newUsername = prompt(message + "\nEdit Username:", entry.username);
+            const newPassword = prompt(message + "\nEdit Password:", entry.password);
+            const newMore = prompt(message + "\nEdit More Info:", entry.more);
+
+            if (newWebsite && newEmail && newUsername && newPassword) {
+                entries[index] = {
+                    website: newWebsite,
+                    email: newEmail,
+                    username: newUsername,
+                    password: newPassword,
+                    more: newMore
+                };
+                displayEntries();
+            }
+        }
+
+        function addNewEntry() {
+            const newWebsite = prompt("Enter Website Name:");
+            const newEmail = prompt("Enter Email:");
+            const newUsername = prompt("Enter Username:");
+            const newPassword = prompt("Enter Password:");
+            const newMore = prompt("Enter Additional Info:");
+
+            if (newWebsite && newEmail && newUsername && newPassword) {
+                entries.push({
+                    website: newWebsite,
+                    email: newEmail,
+                    username: newUsername,
+                    password: newPassword,
+                    more: newMore
+                });
+                displayEntries();
+            }
+        }
+
+        function downloadUpdatedFile() {
+            const updatedData = JSON.stringify(entries);
+            const encryptedData = CryptoJS.AES.encrypt(updatedData, document.getElementById('masterPassword').value).toString();
+            const blob = new Blob([encryptedData], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'updated_passwords.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
