@@ -205,6 +205,11 @@
             link.download = 'passwords.txt';
             link.click();
         }
+        
+           if (typeof navigator.serviceWorker !== 'undefined') {
+            navigator.serviceWorker.register('sw.js')
+  }
+
     </script>
 </body>
 </html>
