@@ -294,6 +294,9 @@
             a.click();
             document.body.removeChild(a);
         }
+         if (typeof navigator.serviceWorker !== 'undefined') {
+    navigator.serviceWorker.register('sw.js')
+  }
     </script>
 </body>
 </html>
