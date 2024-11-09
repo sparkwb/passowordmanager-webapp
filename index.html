@@ -58,5 +58,10 @@
             <button onclick="location.href='https://kevinspark.rf.gd'">Go Back to Home</button>
         </div>
     </div>
+    <script>
+  if (typeof navigator.serviceWorker !== 'undefined') {
+    navigator.serviceWorker.register('sw.js')
+  }
+</script>
 </body>
 </html>
