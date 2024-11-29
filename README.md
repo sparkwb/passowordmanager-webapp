@@ -1,4 +1,4 @@
-This is a Passowrd Manager WebApp
+This is a Passoword Manager WebApp
 --------------------------------------------
 Made With HTML, CSS, JavaScript
 
